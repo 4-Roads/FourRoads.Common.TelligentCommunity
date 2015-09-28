@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+	<metadata>
+		<id>FourRoads.Common.TelligentCommunity</id>
+		<authors>4 Roads Ltd</authors>
+		<owners>4 Roads Ltd</owners>
+		<version>1.0</version>
+		<licenseUrl>http://www.4-roads.com/OpenLicense</licenseUrl>
+		<requireLicenseAcceptance>true</requireLicenseAcceptance>
+		<description>Library of common code for use with Telligent Community platform</description>
+		<tags>utility</tags>
+	</metadata>
+</package>
