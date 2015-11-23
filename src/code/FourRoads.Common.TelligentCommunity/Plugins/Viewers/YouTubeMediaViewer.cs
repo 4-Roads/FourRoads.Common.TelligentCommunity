@@ -64,7 +64,7 @@ namespace FourRoads.Common.TelligentCommunity.Plugins.Viewers
             else
             {
                 XmlDocument xmlDocument = new XmlDocument();
-                StringBuilder oembed = new StringBuilder("https://www.youtube.com/oembed?url=").Append(HttpUtility.UrlEncode(url.ToString())).Append("&format=xml");
+                StringBuilder oembed = new StringBuilder("https://www.youtube.com/oembed?scheme=https&url=").Append(HttpUtility.UrlEncode(url.ToString())).Append("&format=xml").Append("&maxwidth=").Append(width).Append("&maxheight=").Append(height);
                 xmlDocument.Load(oembed.ToString());
                 XmlNode xmlNode = xmlDocument.SelectSingleNode("/oembed/html/text()");
                 if (xmlNode != null)
