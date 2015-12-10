@@ -115,6 +115,7 @@
     <Compile Include="Controls\ApiSafeUserLookup.cs" />
     <Compile Include="Controls\MultiSelectRepeater.cs" />
     <Compile Include="Controls\PasswordPropertyControl.cs" />
+    <Compile Include="Diagnostics.cs" />
     <Compile Include="Properties\GlobalAssemblyInfo.cs" />
     <Compile Include="Plugins\Base\CFSFilestoreInstaller.cs" />
     <Compile Include="Plugins\Base\FactoryDefaultThemeInstaller.cs" />

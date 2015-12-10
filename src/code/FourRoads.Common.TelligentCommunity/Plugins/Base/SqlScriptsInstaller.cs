@@ -40,40 +40,47 @@ namespace FourRoads.Common.TelligentCommunity.Plugins.Base
 
         public void Install(Version lastInstalledVersion)
         {
-            EmbeddedResources.EnumerateReosurces(BaseResourcePath + "Sql.", ".install.sql", resourceName =>
+            if (lastInstalledVersion < Version)
             {
-                using (var connection = GetSqlConnection())
+                Uninstall();
+                EmbeddedResources.EnumerateReosurces(BaseResourcePath + "Sql.", ".install.sql", resourceName =>
                 {
-                    connection.Open();
-                    foreach (string statement in GetStatementsFromSqlBatch(EmbeddedResources.GetString(resourceName)))
+                    using (var connection = GetSqlConnection())
                     {
-                        using (var command = new SqlCommand(statement, connection))
+                        connection.Open();
+                        foreach (string statement in GetStatementsFromSqlBatch(EmbeddedResources.GetString(resourceName)))
                         {
-                            command.ExecuteNonQuery();
+                            using (var command = new SqlCommand(statement, connection))
+                            {
+                                command.ExecuteNonQuery();
+                            }
                         }
+                        connection.Close();
                     }
-                    connection.Close();
-                }
-            });
+                });
+            }
         }
 
         public void Uninstall()
         {
-            EmbeddedResources.EnumerateReosurces(BaseResourcePath + "Sql.", ".uninstall.sql", resourceName =>
+            if (!Diagnostics.IsDebug(GetType().Assembly))
             {
-                using (var connection = GetSqlConnection())
+                EmbeddedResources.EnumerateReosurces(BaseResourcePath + "Sql.", ".uninstall.sql", resourceName =>
                 {
-                    connection.Open();
-                    foreach (string statement in GetStatementsFromSqlBatch(EmbeddedResources.GetString(resourceName)))
+                    using (var connection = GetSqlConnection())
                     {
-                        using (var command = new SqlCommand(statement, connection))
+                        connection.Open();
+                        foreach (string statement in GetStatementsFromSqlBatch(EmbeddedResources.GetString(resourceName)))
                         {
-                            command.ExecuteNonQuery();
+                            using (var command = new SqlCommand(statement, connection))
+                            {
+                                command.ExecuteNonQuery();
+                            }
                         }
+                        connection.Close();
                     }
-                    connection.Close();
-                }
-            });
+                });
+            }
         }
 
         private SqlConnection GetSqlConnection()

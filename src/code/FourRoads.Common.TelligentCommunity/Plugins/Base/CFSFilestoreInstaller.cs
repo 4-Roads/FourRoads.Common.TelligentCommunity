@@ -8,6 +8,7 @@ using FourRoads.Common.TelligentCommunity.Components;
 using FourRoads.Common.TelligentCommunity.Controls;
 using Telligent.DynamicConfiguration.Components;
 using Telligent.Evolution.Extensibility.Api.Version1;
+using Telligent.Evolution.Extensibility.Storage.Version1;
 using Telligent.Evolution.Extensibility.Version1;
 
 namespace FourRoads.Common.TelligentCommunity.Plugins.Base
@@ -39,41 +40,69 @@ namespace FourRoads.Common.TelligentCommunity.Plugins.Base
 
         public void Install(Version lastInstalledVersion)
         {
-            string basePath = BaseResourcePath + ".Filestore.";
-
-            EmbeddedResources.EnumerateReosurces(basePath, "", resourceName =>
+            if (lastInstalledVersion < Version)
             {
-                string cfsFolder = resourceName.Replace(basePath, "");
+                Uninstall();
+                string basePath = BaseResourcePath + ".Filestore.";
 
-                //Assume all files are *.*
-                int pos = cfsFolder.LastIndexOf('.');
-
-                if (pos > 0)
+                EmbeddedResources.EnumerateReosurces(basePath, "", resourceName =>
                 {
-                    int previousDot = cfsFolder.LastIndexOf('.', pos - 1);
+                    string file;
 
-                    if (previousDot < 0)
-                        previousDot = -1;
-
-                    string folder = cfsFolder.Substring(0, previousDot);
-                    string file = cfsFolder.Substring(previousDot+1);
-
-                    var cfsStore = Telligent.Evolution.Extensibility.Storage.Version1.CentralizedFileStorage.GetFileStore(folder);
+                    var cfsStore = GetFileStorageProvider(basePath, resourceName, out file);
 
                     if (cfsStore != null)
                     {
                         cfsStore.AddUpdateFile("", file, EmbeddedResources.GetStream(resourceName));
                     }
-                }
-            });
+                });
+            }
+        }
+
+        protected ICentralizedFileStorageProvider GetFileStorageProvider(string basePath, string resourceName, out string fileName)
+        {
+            string cfsFolder = resourceName.Replace(basePath, "");
+
+            //Assume all files are *.*
+            int pos = cfsFolder.LastIndexOf('.');
+
+            if (pos > 0)
+            {
+                int previousDot = cfsFolder.LastIndexOf('.', pos - 1);
+
+                if (previousDot < 0)
+                    previousDot = -1;
+
+                string folder = cfsFolder.Substring(0, previousDot);
+
+                fileName = cfsFolder.Substring(previousDot + 1);
+
+                return  CentralizedFileStorage.GetFileStore(folder);
+            }
+
+            fileName = null;
+
+            return null;
         }
 
         public void Uninstall()
         {
-            EmbeddedResources.EnumerateReosurces(BaseResourcePath + "Filestore.", "", resourceName =>
+            if (!Diagnostics.IsDebug(GetType().Assembly))
             {
-     
-            });
+                string basePath = BaseResourcePath + ".Filestore.";
+
+                EmbeddedResources.EnumerateReosurces(basePath, "", resourceName =>
+                {
+                    string file;
+
+                    var cfsStore = GetFileStorageProvider(basePath, resourceName, out file);
+
+                    if (cfsStore != null)
+                    {
+                        cfsStore.Delete("", file);
+                    }
+                });
+            }
         }
 
  

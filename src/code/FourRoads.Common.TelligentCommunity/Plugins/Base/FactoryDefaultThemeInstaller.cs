@@ -37,131 +37,137 @@ namespace FourRoads.Common.TelligentCommunity.Plugins.Base
 
         public void Install(Version lastInstalledVersion)
         {
-            #region Install custom theme
-
-            string basePath = BaseResourcePath + "Themes.";
-
-            EmbeddedResources.EnumerateReosurces(basePath , ".xml", resourceName =>
+            if (lastInstalledVersion < Version)
             {
-                // Get widget identifier
-                XmlDocument xmlDocument = new XmlDocument();
+                Uninstall();
 
-                try
+                #region Install custom theme
+
+                string basePath = BaseResourcePath + "Themes.";
+
+                EmbeddedResources.EnumerateReosurces(basePath, ".xml", resourceName =>
                 {
-                    xmlDocument.LoadXml(EmbeddedResources.GetString(resourceName));
-                    XmlNode node = xmlDocument.SelectSingleNode("/theme/themeImplementation");
+                    // Get widget identifier
+                    XmlDocument xmlDocument = new XmlDocument();
 
-                    if (node != null)
-                        ThemeConfigurations.DeserializeTheme(node, true, false);
-                }
-                catch (Exception exception)
-                {
-                    new CSException(CSExceptionType.UnknownError,
-                        string.Format("Couldn't load theme from '{0}' embedded resource.", resourceName), exception).Log();
-                }
-            });
-
-
-            #endregion
-
-            #region Install custom pages into theme (and revert any configured defaults or contextual versions of these pages)
-
-            basePath = BaseResourcePath + "Pages.";
-
-            EmbeddedResources.EnumerateReosurces(basePath, ".xml", resourceName =>
-            {
-                XmlDocument xml = new XmlDocument();
-
-                try
-                {
-                    xml.LoadXml(EmbeddedResources.GetString(resourceName));
-                    XmlNode node = xml.SelectSingleNode("/theme/contentFragmentPages/contentFragmentPage");
-
-                    if (node == null || node.Attributes == null)
-                        return;
-
-                    string pageName = node.Attributes["pageName"].Value;
-                    string themeType = node.Attributes["themeType"].Value;
-
-                    if (string.IsNullOrEmpty(pageName) || string.IsNullOrEmpty(themeType))
-                        return;
-
-                    foreach (Theme theme in Themes.List(Guid.Parse(themeType)))
+                    try
                     {
-                        if (theme != null)
-                        {
-                            if (theme.IsConfigurationBased)
-                            {
-                                ThemePages.AddUpdateFactoryDefault(theme, node);
-                                ThemePages.DeleteDefault(theme, pageName, true);
-                            }
-                            else
-                            {
-                                ThemePages.AddUpdateDefault(theme, node);
-                            }
+                        xmlDocument.LoadXml(EmbeddedResources.GetString(resourceName));
+                        XmlNode node = xmlDocument.SelectSingleNode("/theme/themeImplementation");
 
-                            ThemePages.Delete(theme, pageName, true);
+                        if (node != null)
+                            ThemeConfigurations.DeserializeTheme(node, true, false);
+                    }
+                    catch (Exception exception)
+                    {
+                        new CSException(CSExceptionType.UnknownError,
+                            string.Format("Couldn't load theme from '{0}' embedded resource.", resourceName), exception).Log();
+                    }
+                });
+
+
+                #endregion
+
+                #region Install custom pages into theme (and revert any configured defaults or contextual versions of these pages)
+
+                basePath = BaseResourcePath + "Pages.";
+
+                EmbeddedResources.EnumerateReosurces(basePath, ".xml", resourceName =>
+                {
+                    XmlDocument xml = new XmlDocument();
+
+                    try
+                    {
+                        xml.LoadXml(EmbeddedResources.GetString(resourceName));
+                        XmlNode node = xml.SelectSingleNode("/theme/contentFragmentPages/contentFragmentPage");
+
+                        if (node == null || node.Attributes == null)
+                            return;
+
+                        string pageName = node.Attributes["pageName"].Value;
+                        string themeType = node.Attributes["themeType"].Value;
+
+                        if (string.IsNullOrEmpty(pageName) || string.IsNullOrEmpty(themeType))
+                            return;
+
+                        foreach (Theme theme in Themes.List(Guid.Parse(themeType)))
+                        {
+                            if (theme != null)
+                            {
+                                if (theme.IsConfigurationBased)
+                                {
+                                    ThemePages.AddUpdateFactoryDefault(theme, node);
+                                    ThemePages.DeleteDefault(theme, pageName, true);
+                                }
+                                else
+                                {
+                                    ThemePages.AddUpdateDefault(theme, node);
+                                }
+
+                                ThemePages.Delete(theme, pageName, true);
+                            }
                         }
                     }
-                }
-                catch (Exception exception)
-                {
-                    new CSException(CSExceptionType.UnknownError,
-                        string.Format("Couldn't load page from '{0}' embedded resource.", resourceName), exception).Log();
-                }
-            });
+                    catch (Exception exception)
+                    {
+                        new CSException(CSExceptionType.UnknownError,string.Format("Couldn't load page from '{0}' embedded resource.", resourceName), exception).Log();
+                    }
+                });
 
-            #endregion
-
+                #endregion
+            }
         }
 
         public void Uninstall()
         {
-            #region Delete custom pages from theme (factory defaults, configured defaults, and contextual pages)
-
-            string basePath = BaseResourcePath + "Themes.";
-
-            EmbeddedResources.EnumerateReosurces(basePath, ".xml", resourceName =>
+            if (!Diagnostics.IsDebug(GetType().Assembly))
             {
-                XmlDocument xml = new XmlDocument();
+                #region Delete custom pages from theme (factory defaults, configured defaults, and contextual pages)
 
-                try
+                string basePath = BaseResourcePath + "Themes.";
+
+                EmbeddedResources.EnumerateReosurces(basePath, ".xml", resourceName =>
                 {
-                    xml.LoadXml(EmbeddedResources.GetString(resourceName));
-                    XmlNode node = xml.SelectSingleNode("/theme/contentFragmentPages/contentFragmentPage");
+                    XmlDocument xml = new XmlDocument();
 
-                    if (node == null || node.Attributes == null)
-                        return;
-
-                    string pageName = node.Attributes["pageName"].Value;
-                    string themeType = node.Attributes["themeType"].Value;
-
-                    if (string.IsNullOrEmpty(pageName) || string.IsNullOrEmpty(themeType))
-                        return;
-
-                    foreach (Theme theme in Themes.List(Guid.Parse(themeType)))
+                    try
                     {
-                        if (theme != null)
-                        {
-                            if (theme.IsConfigurationBased)
-                            {
-                                ThemePages.DeleteFactoryDefault(theme, pageName, true);
-                            }
+                        xml.LoadXml(EmbeddedResources.GetString(resourceName));
+                        XmlNode node = xml.SelectSingleNode("/theme/contentFragmentPages/contentFragmentPage");
 
-                            ThemePages.DeleteDefault(theme, pageName, true);
-                            ThemePages.Delete(theme, pageName, true);
+                        if (node == null || node.Attributes == null)
+                            return;
+
+                        string pageName = node.Attributes["pageName"].Value;
+                        string themeType = node.Attributes["themeType"].Value;
+
+                        if (string.IsNullOrEmpty(pageName) || string.IsNullOrEmpty(themeType))
+                            return;
+
+                        foreach (Theme theme in Themes.List(Guid.Parse(themeType)))
+                        {
+                            if (theme != null)
+                            {
+                                if (theme.IsConfigurationBased)
+                                {
+                                    ThemePages.DeleteFactoryDefault(theme, pageName, true);
+                                }
+
+                                ThemePages.DeleteDefault(theme, pageName, true);
+                                ThemePages.Delete(theme, pageName, true);
+                            }
                         }
                     }
-                }
-                catch (Exception exception)
-                {
-                    new CSException(CSExceptionType.UnknownError,
-                        string.Format("Couldn't delete page from '{0}' embedded resource.", resourceName), exception)
-                        .Log();
-                }
-            });
+                    catch (Exception exception)
+                    {
+                        new CSException(CSExceptionType.UnknownError,
+                            string.Format("Couldn't delete page from '{0}' embedded resource.", resourceName), exception)
+                            .Log();
+                    }
+                });
 
-            #endregion
+                #endregion
+            }
         }
 
         public Version Version

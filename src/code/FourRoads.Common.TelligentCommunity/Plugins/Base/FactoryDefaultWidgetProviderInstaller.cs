@@ -38,76 +38,81 @@ namespace FourRoads.Common.TelligentCommunity.Plugins.Base
 
         public virtual void Install(Version lastInstalledVersion)
         {
-            FactoryDefaultScriptedContentFragmentProviderFiles.DeleteAllFiles(this);
-            string basePath = BaseResourcePath + "Widgets.";
-
-            EmbeddedResources.EnumerateReosurces(basePath, ".xml", resourceName =>
+            if (lastInstalledVersion < Version)
             {
-                try
+                Uninstall();
+
+                string basePath = BaseResourcePath + "Widgets.";
+
+                EmbeddedResources.EnumerateReosurces(basePath, ".xml", resourceName =>
                 {
-                    string widgetName = resourceName.Substring(basePath.Length);
-
-                    using (var stream = EmbeddedResources.GetStream(resourceName))
+                    try
                     {
-                        FactoryDefaultScriptedContentFragmentProviderFiles.AddUpdateDefinitionFile(this, widgetName, stream);
-                    }
+                        string widgetName = resourceName.Substring(basePath.Length);
 
-                    // Get widget identifier
-                    XDocument xdoc = XDocument.Parse(EmbeddedResources.GetString(resourceName));
-                    XElement root = xdoc.Root;
-
-                    if (root == null)
-                        return;
-
-                    XElement element = root.Element("scriptedContentFragment");
-
-                    if (element == null)
-                        return;
-
-                    XAttribute attribute = element.Attribute("instanceIdentifier");
-
-                    if (attribute == null)
-                        return;
-
-                    Guid instanceId = new Guid(attribute.Value);
-
-                    string widgetBasePath = string.Concat(basePath, char.IsNumber(attribute.Value[0]) ? "_" : "", instanceId.ToString("N"), ".");
-                    IEnumerable<string> supplementaryResources =
-                        GetType().Assembly.GetManifestResourceNames().Where(r => r.StartsWith(widgetBasePath)).ToArray();
-
-                    if (!supplementaryResources.Any())
-                        return;
-
-                    foreach (string supplementPath in supplementaryResources)
-                    {
-                        string supplementName = supplementPath.Substring(widgetBasePath.Length);
-
-                        using (var stream = EmbeddedResources.GetStream(supplementPath))
+                        using (var stream = EmbeddedResources.GetStream(resourceName))
                         {
-                            FactoryDefaultScriptedContentFragmentProviderFiles
-                                .AddUpdateSupplementaryFile(this, instanceId, supplementName, stream);
+                            FactoryDefaultScriptedContentFragmentProviderFiles.AddUpdateDefinitionFile(this, widgetName, stream);
+                        }
+
+                        // Get widget identifier
+                        XDocument xdoc = XDocument.Parse(EmbeddedResources.GetString(resourceName));
+                        XElement root = xdoc.Root;
+
+                        if (root == null)
+                            return;
+
+                        XElement element = root.Element("scriptedContentFragment");
+
+                        if (element == null)
+                            return;
+
+                        XAttribute attribute = element.Attribute("instanceIdentifier");
+
+                        if (attribute == null)
+                            return;
+
+                        Guid instanceId = new Guid(attribute.Value);
+
+                        string widgetBasePath = string.Concat(basePath, char.IsNumber(attribute.Value[0]) ? "_" : "", instanceId.ToString("N"), ".");
+                        IEnumerable<string> supplementaryResources =
+                            GetType().Assembly.GetManifestResourceNames().Where(r => r.StartsWith(widgetBasePath)).ToArray();
+
+                        if (!supplementaryResources.Any())
+                            return;
+
+                        foreach (string supplementPath in supplementaryResources)
+                        {
+                            string supplementName = supplementPath.Substring(widgetBasePath.Length);
+
+                            using (var stream = EmbeddedResources.GetStream(supplementPath))
+                            {
+                                FactoryDefaultScriptedContentFragmentProviderFiles
+                                    .AddUpdateSupplementaryFile(this, instanceId, supplementName, stream);
+                            }
                         }
                     }
-                }
-                catch (Exception exception)
-                {
-                    new CSException(CSExceptionType.UnknownError,
-                        string.Format("Couldn't load widget from '{0}' embedded resource.", resourceName), exception).Log();
-                }
-            });
+                    catch (Exception exception)
+                    {
+                        new CSException(CSExceptionType.UnknownError,string.Format("Couldn't load widget from '{0}' embedded resource.", resourceName), exception).Log();
+                    }
+                });
+            }
         }
 
         public virtual void Uninstall()
         {
-            try
+            if (!Diagnostics.IsDebug(GetType().Assembly))
             {
-                FactoryDefaultScriptedContentFragmentProviderFiles.DeleteAllFiles(this);
-            }
-            catch (Exception exception)
-            {
-                new CSException(CSExceptionType.UnknownError,
-                    string.Format("Couldn't delete factory default widgets from provider ID: '{0}'.", ScriptedContentFragmentFactoryDefaultIdentifier), exception)
-                    .Log();
+                //Only in release do we want to uninstall widgets, when in development we don't want this to happen
+                try
+                {
+                    FactoryDefaultScriptedContentFragmentProviderFiles.DeleteAllFiles(this);
+                }
+                catch (Exception exception)
+                {
+                    new CSException(CSExceptionType.UnknownError, string.Format("Couldn't delete factory default widgets from provider ID: '{0}'.", ScriptedContentFragmentFactoryDefaultIdentifier), exception).Log();
+                }
             }
         }
 
